@@ -1,0 +1,33 @@
+# --- Obsidian ---
+# 每台裝置的視窗狀態不同步（不然三端會打架）
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/workspace.json.bak
+
+# --- Python / Jupyter ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+*.egg-info/
+.venv/
+venv/
+
+# --- 作業系統 ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- VSCode ---
+.vscode/settings.json
+
+# --- 個人 / 敏感 ---
+# 如果你之後放 API key、密碼等，一律放在這裡的檔案，不會被推上 GitHub
+.env
+secrets/
+*.key
+
+# --- 大檔案 ---
+# 避免不小心 commit 上百 MB 的資料集
+*.zip
+*.rar
+*.iso
