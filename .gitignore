@@ -46,3 +46,17 @@ a.out
 *.sqlite
 *.sqlite3
 
+# --- Code/ 專屬白名單（自動防護：防止 Termux 無副檔名執行檔被 commit）---
+Code/cpp/*
+!Code/cpp/
+!Code/cpp/*.cpp
+!Code/cpp/*.h
+!Code/cpp/*.hpp
+
+Code/python/*
+!Code/python/
+!Code/python/*.py
+
+Code/sql/*
+!Code/sql/
+!Code/sql/*.sql
