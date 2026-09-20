@@ -37,7 +37,8 @@
 
 ### 1. [[../courses/data-structures/README|資料結構 (Data Structure)]]
 - **目前章節**：Ch1 基礎概念 & 複雜度分析 ➔ Ch2 陣列
-- **筆記索引**：[[../courses/data-structures/notes/2026-09-07-ch01-basic-concepts|W1 基礎概念]], [[../courses/data-structures/notes/2026-09-14-space-complexity|空間複雜度]], [[../courses/data-structures/notes/2026-09-14-ch02-arrays|Ch2 陣列]]
+- **講義筆記（已轉 .md 可直接邊上課邊編輯）**：[[../courses/data-structures/notes/02_Basic|02_Basic]], [[../courses/data-structures/notes/03_ArrayAndStructuresok|03_Array]], [[../courses/data-structures/notes/04_StacksAndQueues|04_Stacks/Queues]], [[../courses/data-structures/notes/05_LinkingList|05_LinkedList]], [[../courses/data-structures/notes/06_Trees|06_Trees]], [[../courses/data-structures/notes/07_GraphsM2|07_Graphs]], [[../courses/data-structures/notes/08_SortM2|08_Sort]], [[../courses/data-structures/notes/09_HashingM|09_Hashing]]
+- **精煉筆記**：[[../courses/data-structures/notes/2026-09-07-ch01-basic-concepts|W1 基礎概念]], [[../courses/data-structures/notes/2026-09-14-space-complexity|空間複雜度]], [[../courses/data-structures/notes/2026-09-14-ch02-arrays|Ch2 陣列]]
 - **程式 / 作業進度**：基本演算法複雜度分析練習
 - **卡關 / 需加強項目**：迴圈複雜度的數學級數求和推導
 
