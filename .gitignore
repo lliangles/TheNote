@@ -31,3 +31,18 @@ secrets/
 *.zip
 *.rar
 *.iso
+
+# --- 編譯生成檔 / 執行檔 (Termux & Local) ---
+*.exe
+*.out
+*.o
+*.obj
+*.app
+*.bin
+a.out
+
+# --- 本地暫存資料庫 ---
+*.db
+*.sqlite
+*.sqlite3
+
