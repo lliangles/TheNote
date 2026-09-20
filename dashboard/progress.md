@@ -13,7 +13,7 @@
 | 2 | **資料庫系統管理** | 陳士杰 | Ch01～Ch09 + 期末總複習 | 🟢 全學期完備 | [[courses/database-systems/README\|進入科目]] |
 | 3 | **統計學(一)** | 張志信 | Ch01～Ch10 + 公式速查 | 🟢 全學期完備 | [[courses/statistics/README\|進入科目]] |
 | 4 | **電腦網路管理** | 張朝旭 | W01～W16 + 期末實作總整 | 🟢 全學期完備 | [[courses/network-administration/README\|進入科目]] |
-| 5 | **人工智慧程式設計** | 溫敏淦 | Ch01～Ch12 + 專題手冊 | 🟢 全學期完備 | [[courses/ai-programming/README\|進入科目]] |
+| 5 | **人工智慧程式設計** | 溫敏淦 | Ch01～Ch12 (全章節附完整程式碼與註解) + 專題指引 | 🟢 極致深度完備 | [[courses/ai-programming/README\|進入科目]] |
 | 6 | **管理學** | 陳振東 | Ch01～Ch09 + 期末總複習 | 🟢 全學期完備 | [[courses/management/README\|進入科目]] |
 | 7 | **金融機構與市場** | 楊屯山 | Ch01～Ch12 + 模擬試題78題全解 + 公式速查 | 🟢 極致深度完備 | [[courses/financial-markets/README\|進入科目]] |
 | 8 | **歷史思維** | 黃偉雯 | Ch01～Ch09 + 期末專題 | 🟢 全學期完備 | [[courses/historical-thinking/README\|進入科目]] |
