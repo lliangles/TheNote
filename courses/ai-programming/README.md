@@ -1,26 +1,26 @@
 # 🤖 人工智慧程式設計 (AI Programming)
 
 > **授課教師**：溫敏淦 教授  
-> **課程目標**：全面對齊溫敏淦教授全套 15 份授課簡報與手繪原稿，由 Python 基礎語法、核心資料結構、物件導向與演算法出發，深入 NumPy/Pandas 數據科學計算、Matplotlib/Seaborn 統計圖表、Requests/Selenium 大數據網路爬蟲、Jieba 中文自然語言處理，直達比特幣金融特徵工程與生成式 AI (LLM / Line Bot) 實務應用。
+> **課程目標**：全面對齊溫敏淦教授全套 15 份授課簡報與課堂手繪原稿，去除冗長歷史敘事，深度聚焦於 Python 核心語法、規則、底層記憶體模型、NumPy 高效科學計算、Pandas 數據清洗與量化回測、Matplotlib 雙 Y 軸資料視覺化、Requests/Selenium 多執行緒爬蟲、Jieba 中文自然語言處理與假新聞分類器，直達 OpenCV 車牌辨識系統與現代生成式 AI 多模態實務。
 
 ---
 
 ## 📑 全學期 12 大章節知識庫 (直至期末)
 
-| 章節編號 | 單元主題 | 核心精要與範例程式碼 | 狀態 |
+| 章節編號 | 單元主題 | 核心精要與語法規則 | 狀態 |
 | :---: | :--- | :--- | :---: |
-| **Ch01** | [[Ch01-人工智慧導論與開發環境建置]] | AI/ML/DL/GenAI 架構、神經元數學模型 (A/B-cell)、反向傳播鏈鎖律、手刻類神經網路 | 🟢 極致深度完備 |
-| **Ch02** | [[Ch02-Python資料型別變數與運算子]] | 動態強型別、int/float/bool/str、算術/比較/邏輯運算子、f-string 格式化美化 | 🟢 極致深度完備 |
-| **Ch03** | [[Ch03-核心資料結構與記憶體操作]] | List/Tuple/Dict/Set 四大容器、切片賦值、List Comprehension、淺拷貝 vs 深拷貝 | 🟢 極致深度完備 |
-| **Ch04** | [[Ch04-流程控制與迴圈演算法]] | if-elif-else、for/while 迴圈、enumerate/zip 技巧、1到n之3的倍數篩選加總、質數判斷 | 🟢 極致深度完備 |
-| **Ch05** | [[Ch05-函式設計與模組化架構]] | 函式 def、預設參數陷阱、*args/**kwargs 解包、LEGB 作用域、Lambda、map/filter | 🟢 極致深度完備 |
-| **Ch06** | [[Ch06-內建模組檔案讀寫與例外處理]] | math/random/datetime、with open 讀寫純文字/CSV/JSON、try-except-else-finally | 🟢 極致深度完備 |
-| **Ch07** | [[Ch07-NumPy高效科學計算與矩陣運算]] | ndarray 記憶體連續性、向量化加速比對、廣播機制、布林遮罩、矩陣內積 @ 線性代數 | 🟢 極致深度完備 |
-| **Ch08** | [[Ch08-Pandas數據清洗與統計分析]] | Series/DataFrame、loc/iloc 精準切片、缺失值 dropna/fillna、groupby、pivot_table | 🟢 極致深度完備 |
-| **Ch09** | [[Ch09-Matplotlib與Seaborn資料視覺化實務]] | Figure/Axes 物件導向、折線/散佈/長條/直方/箱型圖、微軟正黑體抗亂碼、Seaborn 熱力圖 | 🟢 極致深度完備 |
-| **Ch10** | [[Ch10-網路爬蟲入門與動態網頁大量下載]] | HTTP 協定、Requests、BeautifulSoup、CSS Selector、批次圖片串流下載、Selenium 4 無頭爬蟲 | 🟢 極致深度完備 |
-| **Ch11** | [[Ch11-文本分析Jieba斷詞與文字雲]] | NLP 管線、Jieba 三大模式、自訂專業詞典、停用詞過濾、TF-IDF 萃取、WordCloud 文字雲 | 🟢 極致深度完備 |
-| **Ch12** | [[Ch12-特徵工程量化金融分析與生成式AI]] | 比特幣時間序列、雙均線 SMA 交易策略回測、Line Bot Webhook 架構、OpenAI API 串接 | 🟢 極致深度完備 |
+| **Ch01** | [[Ch01-人工智慧導論與開發環境建置]] | 敘述 (Statement) 組成、反斜線顯式分行、括號隱式分行與行尾註解、分號併行、大小寫敏感性、IPython `?` 查詢、單一神經元傳輸模型與純 Python 手刻神經網路 | 🟢 語法規則完備 |
+| **Ch02** | [[Ch02-Python資料型別變數與運算子]] | 變數名牌 (Name Tag) 模型、垃圾回收 GC、`id()` 位址、命名合法性與保留字禁忌、非布林短路求值 (`A and B` / `A or B`)、銀行家捨入法 (`round`)、多進制轉換與位元運算子 | 🟢 語法規則完備 |
+| **Ch03** | [[Ch03-核心資料結構與記憶體操作]] | List 切片賦值、單元素元組逗號陷阱、元組內嵌可變物件修改邊界、Set Hashable 與空集合陷阱、Dict 視圖與安全存取、淺拷貝 vs 深拷貝記憶體參照 | 🟢 語法規則完備 |
+| **Ch04** | [[Ch04-流程控制與迴圈演算法]] | `input()` 字串本質與 `print()` 的 `sep`/`end`、浮點數比較禁忌、三元運算式、`while`/`for` 迴圈專屬 `else` 子句、產生器表達式括號陷阱、完整 `try-except-else-finally` 架構 | 🟢 語法規則完備 |
+| **Ch05** | [[Ch05-函式設計與模組化架構]] | 預設參數順序與可變物件陷阱、`*args` 與 `**kwargs` 之定義端打包與呼叫端解包對稱性、LEGB 作用域、可變容器原地修改 Scope 例外、物件參照傳遞、Docstring 與內部函式 | 🟢 語法規則完備 |
+| **Ch06** | [[Ch06-內建模組檔案讀寫與例外處理]] | Python 物件導向 (OOP: `self`、私有成員 `__`、繼承、`super()`、`@classmethod`/`@staticmethod`)、套件 `__init__.py` 載入限制、`as` 命名衝突防護、`re` 正規表達式、`with open` 檔案讀寫 | 🟢 語法規則完備 |
+| **Ch07** | [[Ch07-NumPy高效科學計算與矩陣運算]] | `ndarray` 5 大核心屬性 (`itemsize`)、向量內積/外積/叉積代數運算、`reshape` vs `resize` (原地修改)、廣播機制軸向相容性準則、**記憶體 View vs Copy 底層驗證 (`.base`)**、`np.loadtxt`/`np.savetxt` | 🟢 語法規則完備 |
+| **Ch08** | [[Ch08-Pandas數據清洗與統計分析]] | Series 純量擴展、`loc` (端點閉區間) vs `iloc` (半開區間) vs `at`/`iat` 純量極速存取、運算 `fill_value` 防護、累積統計與差分 (`cumsum`, `diff`, `skew`)、比特幣雙均線 (MA) 量化回測演算法 | 🟢 語法規則完備 |
+| **Ch09** | [[Ch09-Matplotlib與Seaborn資料視覺化實務]] | 標記/線型/顏色縮寫格式字串、10 級圖例方位碼、Windows 繁體中文與負號防護、**跨數量級共用 X 軸之雙 Y 軸 (`twinx`) 繪圖**、散佈圖/長條圖/直方圖/圓餅圖 (`explode`)、Pandas 原生繪圖 | 🟢 語法規則完備 |
+| **Ch10** | [[Ch10-網路爬蟲入門與動態網頁大量下載]] | HTTP 請求標頭與 Cookie 偽裝、延遲載入 (Lazy Loading `data-lazy`) 陷阱、`os` 目錄組織、**`threading` 多執行緒平行加速巨量下載**、Selenium 4 ChromeOptions 完整參數配置 (無頭、防反爬、禁圖) | 🟢 語法規則完備 |
+| **Ch11** | [[Ch11-文本分析Jieba斷詞與文字雲]] | Jieba 三大斷詞模式、詞性標註 (`posseg`)、字詞起訖定位 (`tokenize`)、詞頻動態調節 (`suggest_freq`)、TF-IDF 關鍵字權重萃取、`CountVectorizer` 詞袋模型、邏輯斯迴歸假新聞分類器實戰 | 🟢 語法規則完備 |
+| **Ch12** | [[Ch12-特徵工程量化金融分析與生成式AI]] | OpenCV 影像讀取與縮放、攝影機視訊串流即時採集與按鍵監聽 (`VideoCapture`, `waitKey`)、雲端電腦視覺 OCR 二進位傳輸與非同步輪詢、**車牌號碼正規表達式過濾 (`r'^[\w]{2,4}[-. ][\w]{2,4}$'`)**、多模態 VLM 演進 | 🟢 語法規則完備 |
 
 ---
 

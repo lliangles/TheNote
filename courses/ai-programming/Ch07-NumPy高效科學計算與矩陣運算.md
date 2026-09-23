@@ -1,164 +1,224 @@
-# 🧮 Ch07 NumPy 高效科學計算與矩陣運算
+# 🧮 Ch07 NumPy 高效科學計算、矩陣代數與記憶體 View 機制
 
 > **授課教師**：溫敏淦 教授  
-> **對應簡報**：`科學計算資料分析Numpy.pptx`  
-> **重點導讀**：深入理解 NumPy 核心 `ndarray` 物件之記憶體連續排列本質、陣列建構屬性 (shape, ndim, dtype)、強大的廣播機制 (Broadcasting)、向量化運算取代 Python 慢速 for 迴圈之原理、布林遮罩索引、統計聚合函數，以及線性代數矩陣運算。
+> **對應教材**：`科學計算資料分析Numpy.pptx`  
+> **重點導讀**：系統化解析 NumPy 核心 `ndarray` 之底層 C 語言連續記憶體模型與五大核心屬性、特殊陣列建構、向量積運算（內積 `dot`/`inner`、外積 `outer`、叉積 `cross`）、形狀變更 (`reshape` vs `resize` vs `ravel`)、陣列堆疊 (`hstack`/`vstack`) 與分割 (`hsplit`/`vsplit`)、廣播機制 (Broadcasting) 軸向相容性數學準則、**記憶體 View vs Copy 底層驗證 (`.base` 屬性)**，以及數值檔案 I/O 操作 (`np.loadtxt` / `np.savetxt`)。
 
 ---
 
-## 📌 1. 為什麼人工智慧底層必用 NumPy？
+## 📌 1. NumPy ndarray 核心架構與五大屬性
 
-Python 原生 `list` 是物件指標陣列，元素散落在記憶體各處，且每次存取需動態型別檢查；  
-NumPy 的 `ndarray` 具有：
-1. **連續的 C 語言記憶體區塊**：極高的快取命中率 (CPU Cache Hit)。
-2. **同質性資料 (Homogeneous)**：固定記憶體大小（如 `float64`, `int32`）。
-3. **向量化 (Vectorization) 與 SIMD 指令集支援**：底層利用 BLAS/LAPACK 進行高度平行計算。
+NumPy（Numerical Python）是 Python 科學計算與人工智慧生態圈的核心基石。與 Python 原生串列相比，`ndarray` 具有固定長度、元素同質性與連續記憶體配置，能直接調用底層 CPU SIMD 向量化指令集。
+
+### 1-1. 核心陣列屬性表
+| 屬性名稱 | 語法格式 | 意義說明 | 範例與數值 |
+|:---|:---|:---|:---|
+| **維度數** | `a.ndim` | 陣列的維度軸數 (Axes) | 一維為 1，矩陣為 2 |
+| **形狀** | `a.shape` | 以 Tuple 格式記錄每個維度的大小 | 如 `(3, 4)` 代表 3 列 4 欄 |
+| **元素個數** | `a.size` | 陣列中包含的元素總數量 | 等於 shape 各分量乘積 ($3 \times 4 = 12$) |
+| **資料型態** | `a.dtype` | 陣列元素的資料型別 | 如 `int32`, `float64`, `<U10` (字串) |
+| **元素位元組數** | `a.itemsize`| 單一元素所佔用的記憶體 Bytes 數 | `float64` 為 8 bytes，`int32` 為 4 bytes |
+
+---
+
+## 📌 2. 陣列生成與特殊矩陣建構
 
 ```python
 # ==============================================================================
-# 範例程式 7-1：NumPy 向量化運算 vs 原生 Python 迴圈速度對決
+# 範例程式 7-1：ndarray 多樣化生成方式
 # ==============================================================================
 import numpy as np
-import time
 
-size = 1_000_000
+# 1. 由原生 List/Tuple 建立
+arr1d = np.array([1, 2, 3], dtype=np.float64)
 
-# 1. 原生 Python list 平方運算
-py_list = list(range(size))
-start = time.time()
-py_result = [x ** 2 for x in py_list]
-py_time = time.time() - start
+# 2. 特殊矩陣生成
+zeros_mat = np.zeros((2, 3))                 # 全 0 矩陣 (2x3)
+ones_mat  = np.ones((3, 3), dtype=np.int32)   # 全 1 矩陣 (3x3)
+empty_mat = np.empty((2, 2))                 # 未初始化隨機記憶體殘留值矩陣
 
-# 2. NumPy 向量化平方運算
-np_arr = np.arange(size)
-start = time.time()
-np_result = np_arr ** 2
-np_time = time.time() - start
-
-print(f"原生 Python 執行時間: {py_time:.5f} 秒")
-print(f"NumPy 向量化執行時間: {np_time:.5f} 秒")
-print(f"🚀 NumPy 效能加速倍數: 約 {py_time / np_time:.1f} 倍！")
+# 3. 數列產生器
+arange_arr   = np.arange(0, 10, 2)           # [0, 2, 4, 6, 8] (半開區間 [0, 10))
+linspace_arr = np.linspace(0.0, 1.0, 5)      # [0., 0.25, 0.5, 0.75, 1.] (等分取樣，含端點)
 ```
 
 ---
 
-## 📌 2. ndarray 建立、屬性與形狀重塑 (Reshape)
+## 📌 3. 向量積與矩陣代數運算 (Vector & Matrix Algebra)
+
+> [!IMPORTANT] 簡報第 7 與 11 頁向量代數核心
+> 向量在幾何、物理與機器學習中具備多種乘積定義，NumPy 提供完整對應函式：
+
+| 運算類型 | 數學表示 | NumPy 語法 | 意義說明與維度變化 |
+|:---|:---:|:---|:---|
+| **內積 (Dot / Inner)** | $\mathbf{a} \cdot \mathbf{b} = \mathbf{a}^T \mathbf{b}$ | `np.dot(A, B)` 或 `np.inner(A, B)` 或 `A @ B` | 傳回純量（純量積 / 點積），用於計算投影或加權總和 |
+| **外積 (Outer Product)**| $\mathbf{a} \otimes \mathbf{b} = \mathbf{a} \mathbf{b}^T$ | `np.outer(A, B)` | $m$ 維與 $n$ 維向量相乘產生 $m \times n$ 階矩陣 |
+| **叉積 (Cross Product)**| $\mathbf{a} \times \mathbf{b}$ | `np.cross(A, B)` | 向量積，結果為與 $\mathbf{a}, \mathbf{b}$ 均垂直的向量 |
+| **矩陣轉置** | $A^T$ | `np.transpose(A)` 或 `A.T` | 對角線翻轉，列與欄維度互換 |
 
 ```python
 # ==============================================================================
-# 範例程式 7-2：陣列建構與維度形狀轉換
+# 範例程式 7-2：內積、外積、叉積與矩陣相乘
 # ==============================================================================
 import numpy as np
 
-# 1. 建立陣列
-a1 = np.array([1, 2, 3, 4, 5, 6])
-zeros_arr = np.zeros((2, 3))          # 全 0 矩陣 (2x3)
-ones_arr = np.ones((3, 3))            # 全 1 矩陣 (3x3)
-eye_matrix = np.eye(3)                # 3x3 單位矩陣 (Identity Matrix)
-linspace_arr = np.linspace(0, 1, 5)   # 在 0 到 1 之間產生 5 個等間距點
+v1 = np.array([1, 2, 3])
+v2 = np.array([4, 5, 6])
 
-print(f"等間距陣列: {linspace_arr}")
+# 1. 內積 (1*4 + 2*5 + 3*6 = 32)
+dot_val = np.dot(v1, v2)
+print(f"內積 (Dot Product): {dot_val}")     # 32
 
-# 2. 檢視核心屬性
-print(f"維度數量 (ndim): {zeros_arr.ndim}")        # 2
-print(f"形狀形狀 (shape): {zeros_arr.shape}")      # (2, 3)
-print(f"元素總數 (size):  {zeros_arr.size}")       # 6
-print(f"資料型別 (dtype): {zeros_arr.dtype}")      # float64
+# 2. 外積 (產生 3x3 矩陣)
+outer_mat = np.outer(v1, v2)
+print(f"外積 (Outer Product):\n{outer_mat}")
 
-# 3. 形狀變更 reshape(-1 由系統自動推算)
-matrix_2x3 = a1.reshape(2, 3)
-matrix_3x2 = a1.reshape(3, -1)        # 自動推斷欄數為 2
-flattened = matrix_2x3.flatten()      # 展平成一維陣列
+# 3. 叉積 (向量積: [2*6-3*5, 3*4-1*6, 1*5-2*4] = [-3, 6, -3])
+cross_vec = np.cross(v1, v2)
+print(f"叉積 (Cross Product): {cross_vec}") # [-3  6 -3]
 
-print(f"2x3 矩陣:\n{matrix_2x3}")
-print(f"展平後: {flattened}")
+# 4. 矩陣乘法運算子 @
+M = np.array([[1, 2], [3, 4]])
+N = np.array([[5, 6], [7, 8]])
+print(f"矩陣相乘 M @ N:\n{M @ N}")
 ```
 
 ---
 
-## 📌 3. 廣播機制 (Broadcasting) 規則
+## 📌 4. 形狀變更、陣列堆疊與分割
 
-廣播允許不同維度形狀的陣列進行算術運算，無需額外複製記憶體。  
-**廣播兩大相容規則**：從末端維度（最右邊）開始往前比對：
-1. 維度大小**完全相同**，或
-2. 其中一個維度的大小**為 1**。
+### 4-1. 形狀變更三劍客：`reshape` vs `ravel` vs `resize`
+* **`A.reshape(m, n)`**：回傳一個改變形狀的**新 View，不改變原陣列 `A` 的形狀**。
+* **`A.ravel()`**：扁平化為一維陣列 View，**不改變原陣列 `A`**。
+* **`A.resize(m, n)`**：**注意！這是原地操作 (In-place)！會直接修改原陣列 `A` 本身的形狀與大小**！
+
+### 4-2. 陣列堆疊與分割 (Stacking & Splitting)
+* **水平與垂直堆疊**：
+  * `np.hstack((A, B))` 或 `np.column_stack((A, B))`：水平方向（橫向欄位擴展）串接。
+  * `np.vstack((A, B))` 或 `np.row_stack((A, B))`：垂直方向（縱向列數擴展）堆疊。
+* **新增維度**：使用 `np.newaxis`，例如將形狀 `(3,)` 升維為 `(3, 1)`：`W[:, np.newaxis]`。
+* **陣列分割**：
+  * `np.hsplit(A, n)`：水平切分為 $n$ 個子陣列。
+  * `np.vsplit(A, n)`：垂直切分為 $n$ 個子陣列。
 
 ```python
 # ==============================================================================
-# 範例程式 7-3：廣播機制實例（特徵標準化常用）
+# 範例程式 7-3：堆疊、分割與升維
 # ==============================================================================
 import numpy as np
 
-# 假設資料矩陣為 3 筆樣本、每筆樣本有 2 個特徵 (形狀 3x2)
+a = np.array([[1, 2], [3, 4]])
+b = np.array([[5, 6], [7, 8]])
+
+# 堆疊
+v_stacked = np.vstack((a, b))  # 形狀 (4, 2)
+h_stacked = np.hstack((a, b))  # 形狀 (2, 4)
+print(f"垂直堆疊:\n{v_stacked}")
+print(f"水平堆疊:\n{h_stacked}")
+
+# 升維
+vec = np.array([10, 20, 30])   # shape: (3,)
+col_vec = vec[:, np.newaxis]   # shape: (3, 1)
+print(f"升維後形狀: {col_vec.shape}")
+```
+
+---
+
+## 📌 5. 廣播機制核心準則 (Broadcasting Rules)
+
+> [!IMPORTANT] 簡報第 11 頁廣播原則
+> 廣播是指在對不同形狀的陣列進行算術運算時，NumPy 自動在虛擬維度上將較小的陣列擴展以匹配較大陣列的機制（不產生實體記憶體複製）。
+
+### 維度相容性準則 (Compatibility Rules)
+比對兩個陣列的 shape，**從最後一個維度（Trailing Dimension，最右側）開始往前逐一比對**。若各維度滿足以下**任一條件**，即屬相容：
+1. 兩個維度的大小**完全相等**。
+2. 其中一個陣列在該維度的大小**為 1**。
+
+#### 相容與不相容實例推導：
+* **相容範例 1**：$A$ 為 $(15, 3, 5)$，$B$ 為 $(3, 1)$。
+  * 最右軸：$5$ vs $1$（相容，可擴展為 5）。
+  * 中間軸：$3$ vs $3$（相容）。
+  * 左側軸：$15$ vs 空缺（相容，可擴展為 15）。
+  * $\Rightarrow$ $B$ 可自動廣播擴展為 $(15, 3, 5)$ 完成運算！
+* **不相容範例 2**：$A$ 為 $(3, 5)$，$B$ 為 $(3, 2)$。
+  * 最右軸：$5$ vs $2$（既不相等亦不為 1）$\Rightarrow$ **不相容！直接拋出 `ValueError: operands could not be broadcast together`**！
+
+---
+
+## 📌 6. 陣列記憶體機制：View（檢視） vs Copy（拷貝）
+
+> [!CAUTION] 簡報第 13 頁核心考點
+> 混淆 View 與 Copy 是資料科學除錯中最隱蔽的陷阱！
+
+```mermaid
+flowchart TD
+    subgraph Direct ["1. 直接指派 (B = A)"]
+        D1["變數 A"] --> Shared["同一 ndarray 物件<br>(B is A 為 True)"]
+        D2["變數 B"] --> Shared
+    end
+
+    subgraph ViewMode ["2. 檢視 (B = A.view() 或 切片)"]
+        V1["變數 A (原始資料)"] --> Buf["底層記憶體緩衝區"]
+        V2["變數 B (全新 Header 物件)"] -. "共用資料 (B.base is A 為 True)" .-> Buf
+    end
+
+    subgraph CopyMode ["3. 深拷貝 (B = A.copy())"]
+        C1["變數 A"] --> BufA["獨立緩衝區 A"]
+        C2["變數 B"] --> BufB["獨立緩衝區 B (B.base is None)"]
+    end
+```
+
+```python
+# ==============================================================================
+# 範例程式 7-4：View vs Copy 記憶體基底驗證
+# ==============================================================================
+import numpy as np
+
+A = np.array([10, 20, 30])
+
+# 1. 檢視 (View)
+B = A.view()
+print(f"B is A:       {B is A}")       # False (B 是一個新的 ndarray 物件)
+print(f"B.base is A:  {B.base is A}")  # True (B 的底層記憶體資料完全指向 A！)
+B[0] = 999
+print(f"修改 B 後的 A: {A}")           # [999, 20, 30] (A 連動被竄改！)
+
+# 2. 獨立拷貝 (Copy)
+C = A.copy()
+print(f"C.base is A:  {C.base is A}")  # False (C.base 為 None，擁有全新記憶體)
+C[0] = 111
+print(f"修改 C 後的 A: {A}")           # [999, 20, 30] (A 完全不受影響)
+```
+
+---
+
+## 📌 7. 純數值檔案 I/O 操作 (`loadtxt` 與 `savetxt`)
+
+針對純數值或結構化 CSV 資料，NumPy 提供了極為高效的批次寫入與讀取方法：
+
+```python
+# ==============================================================================
+# 範例程式 7-5：loadtxt 與 savetxt 實務
+# ==============================================================================
+import numpy as np
+import os
+
+file_path = "temp_matrix.csv"
+
+# 1. 建立測試矩陣並儲存
 data = np.array([
-    [10.0, 200.0],
-    [20.0, 400.0],
-    [30.0, 600.0]
+    [1.0, 2.5, 3.8],
+    [4.2, 5.1, 6.9],
+    [7.0, 8.4, 9.6]
 ])
 
-# 每個特徵的平均值 (形狀 1x2)
-means = np.array([20.0, 400.0])
+# 儲存 (delimiter 指定分隔符號，fmt 指定浮點數輸出格式，header 加入欄位標頭)
+np.savetxt(file_path, data, delimiter=",", fmt="%.2f", header="col1,col2,col3", comments="")
 
-# 廣播運算：(3, 2) 減去 (2,) -> 自動將 (2,) 廣播擴展為 3 列進行逐元素相減
-centered_data = data - means
+# 2. 讀取特定欄位 (skiprows=1 跳過標頭，usecols=(0, 2) 僅讀取第 0 與第 2 欄)
+loaded = np.loadtxt(file_path, delimiter=",", skiprows=1, usecols=(0, 2))
+print(f"讀取第 0 與第 2 欄結果:\n{loaded}")
 
-print("--- 零均值化資料 (Centering) ---")
-print(centered_data)
-```
-
----
-
-## 📌 4. 布林遮罩索引 (Boolean Masking) 與統計聚合
-
-```python
-# ==============================================================================
-# 範例程式 7-4：條件遮罩篩選與統計運算
-# ==============================================================================
-import numpy as np
-
-scores = np.array([55, 78, 92, 45, 88, 60, 99, 30])
-
-# 1. 布林遮罩 (Boolean Mask)
-pass_mask = scores >= 60
-print(f"及格遮罩陣列: {pass_mask}")
-passed_scores = scores[pass_mask]      # 提取及格的所有成績
-print(f"及格成績清單: {passed_scores}")
-
-# 2. 條件替換 np.where(條件, 真值替換, 假值替換)
-# 將所有不及格 (<60) 的成績全部補正為 60 分
-adjusted_scores = np.where(scores < 60, 60, scores)
-print(f"調分後成績:   {adjusted_scores}")
-
-# 3. 沿軸統計聚合運算 (axis=0 沿列向下壓縮 / 垂直; axis=1 沿欄向右壓縮 / 水平)
-mat = np.array([[10, 20], [30, 40], [50, 60]])
-print(f"整體平均: {mat.mean()}")
-print(f"各特徵欄位平均 (axis=0): {mat.mean(axis=0)}")  # [30. 40.]
-print(f"各樣本列總和   (axis=1): {mat.sum(axis=1)}")   # [30 70 110]
-```
-
----
-
-## 📌 5. 線性代數與矩陣乘法 (Matrix Multiplication)
-
-```python
-# ==============================================================================
-# 範例程式 7-5：矩陣內積 (@ 運算子) 與線性方程組求解
-# ==============================================================================
-import numpy as np
-
-# 1. 矩陣內積 (Matrix Dot Product)
-# A 是 2x3 矩陣，B 是 3x2 矩陣 -> 相乘結果為 2x2 矩陣
-A = np.array([[1, 2, 3], [4, 5, 6]])
-B = np.array([[7, 8], [9, 1], [2, 3]])
-
-# 使用 @ 運算子或 np.dot()
-C = A @ B
-print(f"矩陣內積 C = A @ B:\n{C}")
-
-# 2. 解線性聯立方程式: 2x + y = 8, x + 3y = 13
-coeff_matrix = np.array([[2, 1], [1, 3]])  # 係數矩陣
-const_vector = np.array([8, 13])           # 常數向量
-
-solution = np.linalg.solve(coeff_matrix, const_vector)
-print(f"方程組求解結果: x = {solution[0]:.1f}, y = {solution[1]:.1f}")  # x=2.2, y=3.6
+if os.path.exists(file_path):
+    os.remove(file_path)
 ```

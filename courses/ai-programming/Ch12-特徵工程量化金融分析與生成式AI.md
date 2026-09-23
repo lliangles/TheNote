@@ -1,136 +1,181 @@
-# 🚀 Ch12 特徵工程、量化金融分析與生成式 AI
+# 🚀 Ch12 電腦視覺、車牌辨識系統與多模態生成式 AI 實務
 
 > **授課教師**：溫敏淦 教授  
-> **對應簡報**：`F1700_ch09.pptx`、`F1700_ch10.pptx`、`bitcoin.7z`  
-> **重點導讀**：將資料科學與 AI 全面落地於兩大頂尖應用：(1) 特徵工程與比特幣 (Bitcoin) 歷史時間序列量化分析、雙均線 (SMA) 買賣交易策略回測；(2) 對話機器人 (ChatBot) 架構、Line Messaging API 串接、OpenAI API / ChatGPT 模型串接，以及提示工程 (Prompt Engineering) 結構化輸出實戰。
+> **對應教材**：`F1700_ch10.pptx`、課堂專題實作  
+> **重點導讀**：系統化貫穿電腦視覺 (Computer Vision) 與邊緣運算：OpenCV 影像讀取與縮放 (`imread`, `resize`, `imwrite`)、攝影機即時視訊串流採集 (`VideoCapture`, `waitKey` 鍵盤事件、資源釋放 `release`)、雲端電腦視覺 OCR API 介接（二進位串流 POST 請求與輪詢）、**車牌號碼正規表達式精準過濾 (`r'^[\w]{2,4}[-. ][\w]{2,4}$'`)**，以及比較傳統 OCR 與現代多模態生成式 AI (VLM: Vision-Language Model) 在智慧交通監控之典範轉移。
 
 ---
 
-## 📌 1. 比特幣 (Bitcoin) 量化金融特徵工程 (對應課堂 Ch09)
+## 📌 1. OpenCV 影像處理基礎與視訊串流採集
 
-在金融科技 (FinTech) 中，我們透過移動平均線 (Simple Moving Average, SMA) 來過濾市場隨機噪音：
-- **短天期均線 (如 SMA-5)**：反應價格最新動態。
-- **長天期均線 (如 SMA-20)**：代表中期趨勢防線。
-- **黃金交叉 (Golden Cross)**：短均線上穿長均線 $\implies$ **買進信號 (Buy Signal)**。
-- **死亡交叉 (Death Cross)**：短均線下穿長均線 $\implies$ **賣出信號 (Sell Signal)**。
+> [!IMPORTANT] 簡報第 10 章第 3~20 頁 OpenCV 核心操作
+> OpenCV (`cv2`) 是電腦視覺領域最強大且廣泛使用的開源函式庫，影像在 Python 中直接以 NumPy 的 `ndarray` 形式儲存（BGR 顏色空間排列）。
+
+### 1-1. 影像讀取、縮放與儲存三大步驟
+1. **`cv2.imread(path, flags)`**：讀取影像，預設為彩色 BGR；可傳入 `cv2.IMREAD_GRAYSCALE` 讀取為單通道灰階影像。
+2. **`cv2.resize(src, (new_w, new_h))`**：注意！OpenCV 的尺寸元組順序為 **`(寬度 Width, 高度 Height)`**，與 NumPy 的 `(Rows, Cols)` 正好相反！
+3. **`cv2.imwrite(path, img)`**：將矩陣儲存為 JPG、PNG 檔案。
+
+### 1-2. 攝影機即時影像串流與鍵盤事件監控
+* **`cv2.VideoCapture(0)`**：建立攝影機物件（`0` 代表本機第一台預設攝影機）。
+* **`cap.isOpened()`**：檢查攝影機硬體是否成功啟用。
+* **`ret, frame = cap.read()`**：從視訊流中擷取當前影格（`ret` 為布林值表示是否讀取成功，`frame` 為當前影格影像陣列）。
+* **`cv2.waitKey(delay)` 核心規則**：
+  * 若傳入 `0`：無限期暫停，直到使用者按下任意鍵為止。
+  * 若傳入正整數 $n$：等待 $n$ 毫秒，期間若有按鍵則傳回該按鍵的 ASCII 碼值，無按鍵則傳回 -1。
+  * **退出條件樣板**：`if cv2.waitKey(1) & 0xFF == ord('q'): break`（按下鍵盤 `q` 退出迴圈）。
+* **資源釋放鐵律**：使用完畢必須執行 `cap.release()` 與 `cv2.destroyAllWindows()`，防止相機被作業系統死鎖！
 
 ```python
 # ==============================================================================
-# 範例程式 12-1：比特幣歷史價格讀取、特徵工程與雙均線策略回測
-# 說明：對應溫敏淦教授 F1700_ch09 課堂主題
+# 範例程式 12-1：OpenCV 攝影機即時監控與拍照儲存
 # ==============================================================================
-import pandas as pd
-import numpy as np
+import cv2
 
-# 建立模擬比特幣 100 天交易價格時間序列
-np.random.seed(42)
-dates = pd.date_range("2024-01-01", periods=100)
-# 幾何布朗運動模擬價格走勢
-price_changes = np.random.normal(0.002, 0.03, 100)
-prices = 42000 * np.cumprod(1 + price_changes)
+def run_camera_capture():
+    # 1. 建立攝影機物件
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        print("❌ 無法開啟攝影機設備！")
+        return
 
-df_btc = pd.DataFrame({"Date": dates, "Close": prices}).set_index("Date")
+    print("📷 攝影機已啟動，按 'c' 拍照存檔，按 'q' 退出程式...")
 
-# 1. 特徵工程：計算日收益率、滾動波動率、5日均線與20日均線
-df_btc["Daily_Return"] = df_btc["Close"].pct_change()
-df_btc["SMA_5"] = df_btc["Close"].rolling(window=5).mean()
-df_btc["SMA_20"] = df_btc["Close"].rolling(window=20).mean()
+    photo_count = 0
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("無法接收視訊影格，終止連線。")
+            break
 
-# 2. 交易信號判定 (Signal)
-# 當 SMA_5 > SMA_20 時持倉 (1)，否則空手 (0)
-df_btc["Signal"] = np.where(df_btc["SMA_5"] > df_btc["SMA_20"], 1, 0)
-# 部位變更點 (前日信號次日開盤執行)
-df_btc["Position"] = df_btc["Signal"].shift(1)
+        # 顯示影像於名為 'Camera View' 的視窗
+        cv2.imshow("Camera View", frame)
 
-# 3. 策略報酬率計算
-df_btc["Strategy_Return"] = df_btc["Position"] * df_btc["Daily_Return"]
+        # 監聽鍵盤按鍵事件
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
+            # 按下 'q' 退出無窮迴圈
+            break
+        elif key == ord('c'):
+            # 按下 'c' 觸發拍照存檔
+            photo_count += 1
+            filename = f"captured_car_{photo_count:02d}.jpg"
+            # 縮放至標準尺寸 (寬 800, 高 600)
+            resized_frame = cv2.resize(frame, (800, 600))
+            cv2.imwrite(filename, resized_frame)
+            print(f"✅ 已成功拍攝並存檔: {filename}")
 
-# 4. 累積報酬率對比
-df_btc["Cum_Market_Return"] = (1 + df_btc["Daily_Return"]).cumprod()
-df_btc["Cum_Strategy_Return"] = (1 + df_btc["Strategy_Return"]).cumprod()
-
-print("=== 比特幣雙均線量化策略回測結果 ===")
-print(f"市場買進持有 (Buy & Hold) 最終累積報酬: {df_btc['Cum_Market_Return'].iloc[-1]:.4f}")
-print(f"雙均線量化策略 (SMA Strategy) 最終累積報酬: {df_btc['Cum_Strategy_Return'].iloc[-1]:.4f}")
+    # 釋放相機硬體與銷毀所有視窗
+    cap.release()
+    cv2.destroyAllWindows()
+    print("相機資源已安全釋放。")
 ```
 
 ---
 
-## 📌 2. 對話機器人架構與 Line Messaging API (對應課堂 Ch10)
+## 📌 2. 雲端電腦視覺 OCR API 與二進位影像傳輸
 
-### Line Bot 運作架構：
-$$\text{Line 使用者手機} \xrightarrow{\text{傳送訊息}} \text{Line 官方伺服器} \xrightarrow{\text{Webhook POST}} \text{自建 Flask/FastAPI 後端} \xrightarrow{\text{Reply Token 回應}} \text{使用者}$$
+> [!IMPORTANT] 簡報第 10 章第 28~37 頁 API 傳輸規範
+> 本地端模型常受限於邊緣運算效能，透過雲端 Computer Vision RESTful API 能以高準確率萃取圖片中的文字：
+
+### 2-1. 二進位串流傳送格式
+* **HTTP Method**：`POST`
+* **請求標頭 (Headers)**：
+  ```python
+  headers = {
+      "Content-Type": "application/octet-stream",  # 指定傳送內容為純二進位影像
+      "Ocp-Apim-Subscription-Key": "YOUR_API_KEY"  # 伺服器身分驗證金鑰
+  }
+  ```
+* **請求主體 (Body)**：傳入經過二進位編碼的影像位元組（`img_bytes`）。
+
+### 2-2. 非同步作業輪詢 (Asynchronous Polling)
+由於高解析度影像 OCR 運算需要數百毫秒至數秒：
+1. 伺服器第一時間回傳 `HTTP 202 Accepted`，並在 Header 提供 `Operation-Location` URL。
+2. 客戶端進入 `while` 輪詢迴圈，搭配 `time.sleep(1)` 每隔一秒向該 URL 查詢進度。
+3. 當回傳的 JSON 中 `status` 轉變為 `"succeeded"` 時，即可取出最終解析出的文字陣列。
+
+---
+
+## 📌 3. 車牌號碼正規表達式精準過濾 (License Plate Regex)
+
+> [!CAUTION] 簡報第 10 章第 38 頁關鍵演算法
+> OCR 解析結果往往包含街景招牌、警示標語、廣告貼紙等雜訊文字。必須透過精準的正規表達式 (Regex) 進行特徵比對，才能精準過濾出唯一的車牌號碼！
+
+### 台灣車牌格式正規表達式：
+$$r'\text{\textasciicircum}[\backslash w]\{2,4\}[-. ][\backslash w]\{2,4\}\$ '$$
+
+* **語法結構剖析**：
+  * `^` 與 `$`：嚴格錨定字串開頭與結尾，不匹配中間子字串。
+  * `[\w]{2,4}`：前半段為 2 到 4 個英數字元（如舊制 `AB`、`123`，新制 `ABC`、`1234`）。
+  * `[-. ]`：車牌中間的分隔連字號、圓點或空格（如 `ABC-1234` 或 `9876-AA`）。
+  * `[\w]{2,4}`：後半段為 2 到 4 個英數字元。
 
 ```python
 # ==============================================================================
-# 範例程式 12-2：Line Bot Webhook 回應伺服器範本 (Flask 架構)
-# 說明：對應溫敏淦教授 F1700_ch10 聊天系統實作
+# 範例程式 12-2：車牌號碼正規過濾演算法實作
 # ==============================================================================
-from flask import Flask, request, abort
+import re
 
-app = Flask(__name__)
+def filter_license_plate(ocr_text_lines: list[str]) -> list[str]:
+    """
+    從 OCR 辨識出的文字清單中，篩選出符合台灣車牌格式的字串
+    """
+    # 簡報指定車牌正規表達式
+    plate_pattern = re.compile(r"^[\w]{2,4}[-. ][\w]{2,4}$", re.IGNORECASE)
+    valid_plates = []
 
-@app.route("/callback", methods=["POST"])
-def callback():
-    """接收 Line Platform 發送的 Webhook 事件通知"""
-    signature = request.headers.get("X-Line-Signature")
-    body = request.get_data(as_text=True)
+    for line in ocr_text_lines:
+        cleaned_line = line.strip()
+        # 進行正規比對
+        if plate_pattern.match(cleaned_line):
+            valid_plates.append(cleaned_line)
 
-    print(f"收到 Line 伺服器通知事件:\n{body}")
+    return valid_plates
 
-    # 實務上在此處使用 line-bot-sdk 驗證簽章並解析 Event
-    # event.reply_token 可用於免費回覆訊息
-    return "OK"
+# 測試雜訊文字清單
+mock_ocr_results = [
+    "歡迎光臨停車場",
+    "限高 2.1 公尺",
+    "ABC-5678",       # ✅ 合法車牌
+    "0800-092-000",   # ❌ 電話號碼 (多段)
+    "9988-XY",        # ✅ 合法車牌
+    "TOYOTA",         # ❌ 廠牌名稱
+    "AB 1234"         # ✅ 空格分隔合法車牌
+]
 
-if __name__ == "__main__":
-    # 本地測試可搭配 ngrok 穿透內網: ngrok http 5000
-    print("Line Bot 伺服器已就緒...")
+detected = filter_license_plate(mock_ocr_results)
+print(f"🎉 成功過濾辨識出車牌: {detected}") # ['ABC-5678', '9988-XY', 'AB 1234']
 ```
 
 ---
 
-## 📌 3. 生成式 AI 與大型語言模型 API 介接 (OpenAI API)
+## 📌 4. 傳統 OCR 系統 vs 多模態生成式 AI (VLM) 典範轉移
+
+在現代人工智慧架構中，車牌辨識與智慧安防已從「OpenCV + 傳統 OCR + Regex」逐步邁向「多模態大型語言模型 (Vision-Language Models, VLM)」：
+
+| 評估維度 | 傳統架構 (OpenCV + OCR + Regex) | 現代多模態架構 (VLM: Gemini / GPT-4o) |
+|:---|:---|:---|
+| **核心技術** | 邊緣檢測 + 字符模板匹配 + 正則規則 | 巨量參數多模態 Transformer 視覺語言模型 |
+| **抗干擾能力** | 易受天候、雨水反光、髒污或傾斜角度影響 | **極強上下文推論能力**，輕微遮擋或髒污仍可準確推論 |
+| **任務範疇** | 僅能讀取固定字元文字 | **端到端一網打盡**：同時辨識車牌、車輛品牌、車身顏色、車型及違規行為 |
+| **運算成本** | 本地 CPU 即可運行，成本極低、速度快 (幾十毫秒) | 需要 GPU 或雲端 API 調用，具備一定延遲與 API 成本 |
 
 ```python
 # ==============================================================================
-# 範例程式 12-3：串接現代 LLM API 實現結構化分析與提示工程
+# 範例程式 12-3：現代多模態 VLM 結構化車牌與車輛屬性辨識 (概念樣板)
 # ==============================================================================
-import os
-
-def call_llm_assistant(user_prompt: str, system_role: str = "你是一位資深 AI 程式設計教授助教") -> str:
+def vlm_vehicle_inspection_prompt() -> str:
+    """建構多模態模型 Prompt 提示詞"""
+    prompt = """
+    請分析這張停車場監視器照片中的車輛，並以 JSON 格式精確回傳以下資訊：
+    {
+      "license_plate": "車牌號碼 (格式: ABC-1234)",
+      "vehicle_brand": "車輛品牌 (如 Toyota, Tesla)",
+      "vehicle_color": "車身外觀顏色",
+      "vehicle_type": "車型 (如 轎車, 休旅車, 貨車)",
+      "confidence": "辨識信心分數 (0.0~1.0)"
+    }
     """
-    呼叫大型語言模型生成專業分析回覆（通用範本）
-    """
-    try:
-        # 示範使用 OpenAI 官方最新 API 格式 (v1.0+)
-        from openai import OpenAI
-
-        # 建議將金鑰存於環境變數，切勿明文寫入程式碼
-        api_key = os.getenv("OPENAI_API_KEY", "your-api-key-here")
-        client = OpenAI(api_key=api_key)
-
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_role},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=500
-        )
-        return response.choices[0].message.content
-
-    except Exception as e:
-        return f"API 介接呼叫異常: {e}"
-
-# 提示工程 (Prompt Engineering) 最佳實踐：
-# 1. 給定明確角色 (Role)
-# 2. 給定具體任務與邊界 (Task & Constraints)
-# 3. 指定輸出格式 (Markdown 表格或 JSON)
-sample_prompt = """
-請分析 Python 中 list.sort() 與內建函式 sorted(list) 的兩大核心差異，
-並分別給出一段 3 行以內的示範程式碼。
-"""
-print("=== 提示工程測試範例 ===")
-print("提示詞 (Prompt):\n", sample_prompt)
+    return prompt.strip()
 ```
